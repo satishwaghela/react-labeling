@@ -8,12 +8,10 @@ class Label extends Component {
     }
   }
   render () {
-    const { labelMeta } = this.props;
+    const { labelMeta, children } = this.props;
     const { text } = labelMeta;
     return <span data-length={text.length}>
-      <b>
-        {text}
-      </b>
+      <b>{children}</b>
       <b
         style={{color: "red", cursor: "pointer"}}
         onClick={this.handleRemove}

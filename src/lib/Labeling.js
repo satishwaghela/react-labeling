@@ -40,9 +40,30 @@ class Labeling extends Component {
         i++;
       }
     }
-    return sorted.sort((a, b) => {
-      return a.startOffset - b.startOffset;
-    });
+
+    const sortByStartOffset = (arr) => {
+      if(arr.length == 1 && arr[0].children) {
+        sortByStartOffset(arr[0].children);
+      }
+      return arr.sort((a, b) => {
+        if(a.children){
+          sortByStartOffset(a.children)
+        }
+        if(b.children){
+          sortByStartOffset(b.children)
+        }
+        return a.startOffset - b.startOffset;
+      })
+    }
+
+    return sortByStartOffset(sorted);
+    // sorted.sort((a, b) => {
+    //   return a.startOffset - b.startOffset;
+    // });
+  }
+
+  getSimpleTextComp (text) {
+    return <span data-labeling-plain-text={text}>{text}</span>
   }
 
   getContent () {
@@ -56,14 +77,14 @@ class Labeling extends Component {
         let clastIndex = sel.startOffset;
         const cNodes =  []
         sel.children.map((sel2, i2) => {
-          const cText = text.slice(clastIndex, sel2.startOffset);
+          const cText = this.getSimpleTextComp(text.slice(clastIndex, sel2.startOffset));
           cNodes.push(cText);
           const cComp = addComp(sel2, i+'.'+i2, clastIndex, text);
           clastIndex = sel2.endOffset;
           cNodes.push(cComp);
           return cComp
         });
-        cNodes.push(text.slice(clastIndex, sel.endOffset));
+        cNodes.push(this.getSimpleTextComp(text.slice(clastIndex, sel.endOffset)));
         tempNode.push(this.getLabelComp(sel, i, cNodes));
       } else {
         child = text.slice(sel.startOffset, sel.endOffset);
@@ -73,22 +94,26 @@ class Labeling extends Component {
     }
     let lastIndex = 0;
     hSelection.map((sel, i) => {
-      nodes.push(text.slice(lastIndex, sel.startOffset))
+      nodes.push(this.getSimpleTextComp(text.slice(lastIndex, sel.startOffset)))
       const comp = addComp(sel, i, lastIndex, text)
       lastIndex = sel.endOffset;
       nodes.push(comp);
     });
-    nodes.push(text.slice(lastIndex, text.length));
+    nodes.push(this.getSimpleTextComp(text.slice(lastIndex, text.length)));
     return nodes;
   }
 
   getLabelComp (labelMeta, i, child) {
     const { Label } = this.props;
-    return <Label
-      key={i}
-      labelMeta={labelMeta}
-      onRemove={this.handleRemove}
-    >{child}</Label>
+    return <div data-label-text-length={labelMeta.text.length}
+      style={{display: 'inline-block'}}
+    >
+      <Label
+        key={i}
+        labelMeta={labelMeta}
+        onRemove={this.handleRemove}
+      >{child}</Label>
+    </div>;
   }
 
   handleRemove = (labelMeta) => {
@@ -147,13 +172,20 @@ class Labeling extends Component {
     const getPreviousLength = (el, skipTextLength) => {
       let textLength = 0;
       if(!skipTextLength){
-        const dataLength = el.dataset ? el.dataset.length : 0;
-        textLength = dataLength ? JSON.parse(dataLength) : el.textContent.length;
+        const dataLength = el.dataset ? el.dataset.labelTextLength : null;
+        if(dataLength){
+          textLength = JSON.parse(dataLength)
+        } else {
+          if(el.dataset && el.dataset.labelingPlainText) {
+            textLength = el.textContent.length;
+          }
+        }
+        // textLength = dataLength ? JSON.parse(dataLength) : el.textContent.length;
       }
       if (el.previousSibling) {
         textLength += getPreviousLength(el.previousSibling);
       }
-      if (el.parentElement != this.container) {
+      if (!el.previousSibling && el.parentElement != this.container) {
         textLength += getPreviousLength(el.parentElement, true);
       }
       return textLength;
@@ -163,7 +195,7 @@ class Labeling extends Component {
     if (startContainer.previousSibling) {
       prevLength += getPreviousLength(startContainer.previousSibling);
     }
-    if(startContainer.parentElement != this.container){
+    if(!startContainer.previousSibling && startContainer.parentElement != this.container){
       prevLength += getPreviousLength(startContainer.parentElement, true);
     }
 

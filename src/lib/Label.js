@@ -10,7 +10,7 @@ class Label extends Component {
   render () {
     const { labelMeta, children } = this.props;
     const { text } = labelMeta;
-    return <span data-length={text.length}>
+    return <span data-length1={text.length}>
       <b>{children}</b>
       <b
         style={{color: "red", cursor: "pointer"}}

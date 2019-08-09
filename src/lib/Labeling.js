@@ -28,7 +28,7 @@ class Labeling extends Component {
       let spliced = false;
       for(let j = 0; j < sorted.length; j++){
         const sel2 = sorted[j];
-        if(temp.startOffset > sel2.startOffset && temp.endOffset < sel2.endOffset && temp != sel2) {
+        if(temp.startOffset >= sel2.startOffset && temp.endOffset <= sel2.endOffset && temp != sel2) {
           sel2.children = sel2.children || []
           sel2.children.push(temp);
           sorted.splice(i, 1);
